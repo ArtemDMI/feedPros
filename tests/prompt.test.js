@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { SYSTEM_PROMPT, buildPrompt, serializeMessage } from '../prompt.js';
 
-const INSTRUCTION_HEADER = 'Перефразируй и переделай сообщение, соблюдая эти инструкции:';
-const CONTEXT_HEADER = 'Контекст:';
+const CONTEXT_HEADER = 'Вот контекст:';
+const INSTRUCTION_HEADER = 'Вот инструкции которые нужно выполнить и все что ввел юзер';
 const TARGET_HEADER = 'Сообщение для изменения:';
 
 function msg(overrides) {
@@ -18,36 +18,33 @@ function msg(overrides) {
 }
 
 function expectedPrompt({ feedback, contextMessages, target }) {
-    const lines = [INSTRUCTION_HEADER, feedback, '', CONTEXT_HEADER];
+    const lines = [CONTEXT_HEADER];
     const contextBody = contextMessages.map(serializeMessage).join('\n\n');
     if (contextBody) {
         lines.push(contextBody);
     }
-    lines.push('', TARGET_HEADER, serializeMessage(target));
+    lines.push('', INSTRUCTION_HEADER, feedback, '', TARGET_HEADER, serializeMessage(target));
     return lines.join('\n');
 }
 
 function splitContract(prompt) {
-    const prefix = `${INSTRUCTION_HEADER}\n`;
-    assert.ok(prompt.startsWith(prefix), 'prompt must start with the instruction header');
-    const rest = prompt.slice(prefix.length);
-    const contextMarker = `\n\n${CONTEXT_HEADER}\n`;
-    const contextAt = rest.indexOf(contextMarker);
-    assert.ok(contextAt >= 0, 'prompt must contain the context header');
-    const afterContext = rest.slice(contextAt + contextMarker.length);
-    const targetMarker = `\n${TARGET_HEADER}\n`;
-    const targetAt = afterContext.lastIndexOf(targetMarker);
+    const contextStart = `${CONTEXT_HEADER}\n`;
+    assert.ok(prompt.startsWith(contextStart), 'prompt must start with the context header');
+
+    const targetMarker = `\n\n${TARGET_HEADER}\n`;
+    const targetAt = prompt.lastIndexOf(targetMarker);
     assert.ok(targetAt >= 0, 'prompt must contain the target header');
-    assert.equal(
-        afterContext.indexOf(targetMarker),
-        targetAt,
-        'target header must appear once after context',
-    );
+    assert.equal(prompt.indexOf(targetMarker), targetAt, 'target header must appear once');
+
+    const beforeTarget = prompt.slice(0, targetAt);
+    const instructionMarker = `\n\n${INSTRUCTION_HEADER}\n`;
+    const instructionAt = beforeTarget.lastIndexOf(instructionMarker);
+    assert.ok(instructionAt >= 0, 'prompt must contain the instruction header');
+
     return {
-        feedback: rest.slice(0, contextAt),
-        // Blank line before TARGET is `\n` + marker `\nTARGET\n`; drop that separator, not message text.
-        context: afterContext.slice(0, targetAt).replace(/^\n/, '').replace(/\n$/, ''),
-        target: afterContext.slice(targetAt + targetMarker.length),
+        context: prompt.slice(contextStart.length, instructionAt).replace(/^\n/, '').replace(/\n$/, ''),
+        feedback: beforeTarget.slice(instructionAt + instructionMarker.length),
+        target: prompt.slice(targetAt + targetMarker.length),
     };
 }
 
@@ -105,10 +102,10 @@ test('buildPrompt keeps a static systemPrompt and the approved user-prompt order
     assert.equal(
         result.prompt,
         [
+            CONTEXT_HEADER,
+            '',
             INSTRUCTION_HEADER,
             'shorter',
-            '',
-            CONTEXT_HEADER,
             '',
             TARGET_HEADER,
             '[user] name="User" is_user=true is_system=false',
@@ -138,15 +135,15 @@ test('first, middle, and last targets leave the chosen message only as the final
     assert.equal(
         middle.prompt,
         [
-            INSTRUCTION_HEADER,
-            'warmer',
-            '',
             CONTEXT_HEADER,
             '[user] name="User" is_user=true is_system=false',
             'Ask',
             '',
             '[system] name="Sys" is_user=false is_system=true',
             'Stage direction',
+            '',
+            INSTRUCTION_HEADER,
+            'warmer',
             '',
             TARGET_HEADER,
             '[assistant] name="Char" is_user=false is_system=false',

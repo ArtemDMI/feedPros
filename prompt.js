@@ -3,8 +3,8 @@ export const SYSTEM_PROMPT = [
     'Не комментируй изменения, не добавляй кавычки или пояснения и не продолжай сцену за пределами этого сообщения.',
 ].join(' ');
 
-const INSTRUCTION_HEADER = 'Перефразируй и переделай сообщение, соблюдая эти инструкции:';
-const CONTEXT_HEADER = 'Контекст:';
+const CONTEXT_HEADER = 'Вот контекст:';
+const INSTRUCTION_HEADER = 'Вот инструкции которые нужно выполнить и все что ввел юзер';
 const TARGET_HEADER = 'Сообщение для изменения:';
 
 function roleOf(message) {
@@ -50,18 +50,15 @@ export function buildPrompt(chat, targetIndex, feedback) {
     // Filter instead of splice so the caller's chat snapshot stays untouched.
     const history = chat.filter((_, index) => index !== targetIndex);
     const contextBody = formatMessages(history);
-    const parts = [
-        INSTRUCTION_HEADER,
-        feedback,
-        '',
-        CONTEXT_HEADER,
-    ];
+    // Context first, then instructions, then the target — a long history between
+    // the rewrite task and the message makes the model treat context as the edit.
+    const parts = [CONTEXT_HEADER];
 
     if (contextBody) {
         parts.push(contextBody);
     }
 
-    parts.push('', TARGET_HEADER, serializeMessage(target));
+    parts.push('', INSTRUCTION_HEADER, feedback, '', TARGET_HEADER, serializeMessage(target));
 
     return {
         systemPrompt: SYSTEM_PROMPT,
