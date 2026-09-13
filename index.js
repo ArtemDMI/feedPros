@@ -57,7 +57,12 @@ function addButtons(container) {
         container?.prepend(makeButton('feedback', 'fa-comment-dots', 'Feedback'));
     }
     if (!container?.querySelector('.feedpros-undo')) {
-        container?.prepend(makeButton('undo', 'fa-rotate-left', 'Undo last Feedback'));
+        container?.querySelector('.feedpros-feedback')
+            ?.after(makeButton('undo', 'fa-rotate-left', 'Undo last Feedback'));
+    } else {
+        // Reorder existing buttons too, because extension reload can preserve message DOM.
+        container.querySelector('.feedpros-feedback')
+            ?.after(container.querySelector('.feedpros-undo'));
     }
 }
 
@@ -193,7 +198,12 @@ async function runUndo() {
             buffer: current.undoBuffer,
             chatKey: context.chatMetadata?.feedProsChatKey,
         });
-        if (!result.ok) throw Object.assign(new Error('Undo target changed or could not be saved'), { stale: result.reason === 'stale' });
+        if (!result.ok) {
+            const message = result.reason === 'save'
+                ? 'Undo could not save the restored message'
+                : 'Undo target changed';
+            throw Object.assign(new Error(message), { stale: result.reason === 'stale' });
+        }
         current.undoBuffer = null;
         saveSettings(context);
     } catch (error) {

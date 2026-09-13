@@ -25,6 +25,11 @@ function validTarget(chat, snapshot, expectedText) {
         && (message.name ?? '') === snapshot.identity.name;
 }
 
+function validUndoTarget(chat, buffer) {
+    const message = chat?.[buffer?.index];
+    return Boolean(message) && message.mes === buffer.expectedAfterText;
+}
+
 function setText(message, text) {
     message.mes = text;
     if (Array.isArray(message.swipes)
@@ -70,7 +75,7 @@ async function applyReplacementAsync({ context, snapshot, newText }) {
 
 export function applyUndo({ context, buffer, chatKey } = {}) {
     if (!context || !buffer || buffer.chatKey !== chatKey
-        || !validTarget(context.chat, buffer, buffer.expectedAfterText)) {
+        || !validUndoTarget(context.chat, buffer)) {
         return { ok: false, reason: 'stale' };
     }
     return applyUndoAsync({ context, buffer });
