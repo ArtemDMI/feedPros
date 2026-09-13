@@ -1,0 +1,29 @@
+/* Prefix every rule so later UI does not collide with other extensions. */
+.feedpros-settings {
+    container-type: inline-size;
+}
+
+.mes_button.feedpros-feedback,
+.mes_button.feedpros-undo {
+    cursor: pointer;
+}
+
+.feedpros-feedback-input {
+    /* Plan caps the field so it stays readable on wide layouts. */
+    width: min(600px, 100%);
+    min-height: 6em;
+    display: block;
+    margin-top: 0.5rem;
+    resize: vertical;
+}
+
+.feedpros-settings select {
+    width: 100%;
+    margin: 0.25rem 0 0.75rem;
+}
+
+body.feedpros-busy .feedpros-feedback,
+body.feedpros-busy .feedpros-undo {
+    pointer-events: none;
+    opacity: 0.5;
+}
