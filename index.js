@@ -113,11 +113,12 @@ async function requestFeedback() {
     const showPromise = popup.show();
     const liveTextarea = document.querySelector('.popup:not([style*="display: none"]) .feedpros-feedback-input')
         ?? document.querySelector('.feedpros-feedback-input');
-    const popupElement = liveTextarea?.closest('.popup');
+    const popupElement = liveTextarea?.closest('.dialogue_popup');
     if (popupElement) {
         // Override SillyTavern's centered dialog positioning for this short feedback form.
         popupElement.style.top = '100px';
         popupElement.style.transform = 'translateX(-50%)';
+        popupElement.style.padding = '0';
     }
     liveTextarea?.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
