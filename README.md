@@ -1,6 +1,6 @@
 # feedPros
 
-SillyTavern UI extension for **Feedback + Undo** only. The Roll system is not part of this extension.
+SillyTavern UI extension for **Static + Feedback + Undo**. The Roll system is not part of this extension.
 
 ## Requirements
 
@@ -18,14 +18,17 @@ For local development, copy or clone this repository into `public/scripts/extens
 
 ## Scope
 
+- **Static** applies the reusable prompt saved in feedPros settings without
+  opening a popup. It uses the same rewrite flow as manually entering that text
+  through Feedback.
 - **Feedback** opens an empty four-line instruction field. `Enter` submits and
   `Shift+Enter` inserts a new line. The entire current chat is sent, with the
   selected message moved to the final rewrite block.
 - A successful result replaces only the message text and its active swipe.
   Repeated Feedback works from the already rewritten text.
-- **Undo** on any message restores the most recent successful Feedback in the
+- **Undo** on any message restores the most recent successful Static or Feedback rewrite in the
   current chat. The shared buffer survives reload and is cleared on chat switch.
-- Feedback times out after 30 seconds. Errors, late responses, chat switches,
+- Static and Feedback time out after 30 seconds. Errors, late responses, chat switches,
   and messages edited while waiting are not applied.
 - Optional Connection Profile and API Preset selections are applied temporarily
   and restored after every outcome.

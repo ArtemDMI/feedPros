@@ -3,6 +3,7 @@
     container-type: inline-size;
 }
 
+.mes_button.feedpros-static,
 .mes_button.feedpros-feedback,
 .mes_button.feedpros-undo {
     cursor: pointer;
@@ -22,6 +23,14 @@
     margin: 0.25rem 0 0.75rem;
 }
 
+.feedpros-settings #feedpros-static-prompt {
+    width: 100%;
+    min-height: 6em;
+    margin: 0.25rem 0;
+    resize: vertical;
+}
+
+body.feedpros-busy .feedpros-static,
 body.feedpros-busy .feedpros-feedback,
 body.feedpros-busy .feedpros-undo {
     pointer-events: none;

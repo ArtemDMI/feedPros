@@ -53,17 +53,23 @@ function makeButton(kind, icon, title) {
 }
 
 function addButtons(container) {
+    if (!container) return;
+    if (!container.querySelector('.feedpros-static')) {
+        container.prepend(makeButton('static', 'fa-thumbtack', 'Apply Static prompt'));
+    }
     if (!container?.querySelector('.feedpros-feedback')) {
         container?.prepend(makeButton('feedback', 'fa-comment-dots', 'Feedback'));
     }
     if (!container?.querySelector('.feedpros-undo')) {
         container?.querySelector('.feedpros-feedback')
-            ?.after(makeButton('undo', 'fa-rotate-left', 'Undo last Feedback'));
-    } else {
-        // Reorder existing buttons too, because extension reload can preserve message DOM.
-        container.querySelector('.feedpros-feedback')
-            ?.after(container.querySelector('.feedpros-undo'));
+            ?.after(makeButton('undo', 'fa-rotate-left', 'Undo last rewrite'));
     }
+    // Moving existing nodes also repairs order after an extension reload preserves message DOM.
+    container.prepend(
+        container.querySelector('.feedpros-static'),
+        container.querySelector('.feedpros-feedback'),
+        container.querySelector('.feedpros-undo'),
+    );
 }
 
 function refreshButtons(root = document) {
@@ -141,7 +147,7 @@ async function ensureChatKey(context) {
     return metadata.feedProsChatKey;
 }
 
-async function runFeedback(index) {
+async function runRewrite(index, getFeedback, operationName) {
     if (!acquireLock()) {
         notifyWarning('Another feedPros operation is already running.');
         return;
@@ -151,7 +157,7 @@ async function runFeedback(index) {
     runtime.operationId = operationId;
     document.body.classList.add('feedpros-busy');
     try {
-        const feedback = await requestFeedback();
+        const feedback = await getFeedback();
         if (feedback == null || feedback.trim() === '') return;
         const context = globalThis.SillyTavern.getContext();
         const target = context.chat?.[index];
@@ -185,12 +191,26 @@ async function runFeedback(index) {
         }
     } catch (error) {
         if (error?.stale) notifyWarning(error.message);
-        else notifyError(error?.timedOut ? 'Feedback timed out.' : 'Feedback failed.', error);
+        else notifyError(error?.timedOut ? `${operationName} timed out.` : `${operationName} failed.`, error);
     } finally {
         runtime.operationId = null;
         document.body.classList.remove('feedpros-busy');
         releaseLock();
     }
+}
+
+async function runFeedback(index) {
+    await runRewrite(index, requestFeedback, 'Feedback');
+}
+
+async function runStatic(index) {
+    const context = globalThis.SillyTavern.getContext();
+    const staticPrompt = getSettings(context).staticPrompt;
+    if (typeof staticPrompt !== 'string' || staticPrompt.trim() === '') {
+        notifyWarning('Set a Static prompt in feedPros settings first.');
+        return;
+    }
+    await runRewrite(index, async () => staticPrompt, 'Static');
 }
 
 async function runUndo() {
@@ -199,7 +219,7 @@ async function runUndo() {
     try {
         const context = globalThis.SillyTavern.getContext();
         const current = getSettings(context);
-        if (!current.undoBuffer) return notifyWarning('There is no Feedback to undo in this chat.');
+        if (!current.undoBuffer) return notifyWarning('There is no feedPros rewrite to undo in this chat.');
         const result = await applyUndo({
             context,
             buffer: current.undoBuffer,
@@ -223,11 +243,13 @@ async function runUndo() {
 }
 
 function handleClick(event) {
-    const button = event.target.closest('.feedpros-feedback, .feedpros-undo');
+    const button = event.target.closest('.feedpros-static, .feedpros-feedback, .feedpros-undo');
     if (!button) return;
     if (button.classList.contains('feedpros-undo')) return void runUndo();
     const index = Number(button.closest('.mes')?.getAttribute('mesid'));
-    if (Number.isInteger(index)) void runFeedback(index);
+    if (!Number.isInteger(index)) return;
+    if (button.classList.contains('feedpros-static')) void runStatic(index);
+    else void runFeedback(index);
 }
 
 function registerLifecycle(context) {

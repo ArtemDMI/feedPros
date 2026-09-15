@@ -3,6 +3,7 @@ import test from 'node:test';
 import { acquireLock, beginInit, isInitialized, isLocked, releaseLock } from '../common.js';
 import { FEEDBACK_TIMEOUT_MS, runFeedbackGeneration } from '../generation.js';
 import { initFeedPros, registerAppReady } from '../index.js';
+import { DEFAULT_SETTINGS, loadSettings } from '../settings.js';
 
 test('runFeedbackGeneration is a callable generation surface', async () => {
     assert.equal(typeof runFeedbackGeneration, 'function');
@@ -23,6 +24,13 @@ test('runtime lock rejects a second acquire until release', () => {
     assert.equal(isLocked(), false);
     assert.equal(acquireLock(), true);
     releaseLock();
+});
+
+test('Static prompt defaults empty and preserves whitespace exactly', () => {
+    assert.equal(DEFAULT_SETTINGS.staticPrompt, '');
+    const context = { extensionSettings: { feedPros: { staticPrompt: '  line one\nline two  ' } } };
+    const settings = loadSettings(context);
+    assert.equal(settings.staticPrompt, '  line one\nline two  ');
 });
 
 test('APP_READY initializes once and ignores a second call', async () => {

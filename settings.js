@@ -3,6 +3,7 @@ import { EXTENSION_FOLDER_PATH, SETTINGS_KEY, notifyWarning } from './common.js'
 export const SETTINGS_TEMPLATE = `${EXTENSION_FOLDER_PATH}/settings.html`;
 const TEMPLATE_EXTENSION_NAME = 'third-party/feedPros';
 export const DEFAULT_SETTINGS = Object.freeze({
+    staticPrompt: '',
     useDifferentProfile: false,
     profileName: '',
     useDifferentApiPreset: false,
@@ -70,12 +71,18 @@ function bindSettings(context) {
     const root = document.querySelector('.feedpros-settings');
     if (!root) return;
     const current = getSettings(context);
+    const staticPrompt = root.querySelector('#feedpros-static-prompt');
     const profileToggle = root.querySelector('#feedpros-use-profile');
     const profile = root.querySelector('#feedpros-profile');
     const presetToggle = root.querySelector('#feedpros-use-preset');
     const preset = root.querySelector('#feedpros-preset');
+    staticPrompt.value = current.staticPrompt;
     profileToggle.checked = current.useDifferentProfile;
     presetToggle.checked = current.useDifferentApiPreset;
+    staticPrompt.addEventListener('input', () => {
+        current.staticPrompt = staticPrompt.value;
+        saveSettings(context);
+    });
     root.onchange = (event) => {
         if (event.target === profileToggle) current.useDifferentProfile = profileToggle.checked;
         if (event.target === profile) current.profileName = profile.value;

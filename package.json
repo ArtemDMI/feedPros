@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "type": "module",
-    "description": "SillyTavern UI extension: Feedback + Undo",
+    "description": "SillyTavern UI extension: Static + Feedback + Undo",
     "scripts": {
         "test": "node --test tests/prompt.test.js tests/generation.test.js tests/undo.test.js",
         "check": "node --check index.js && node --check common.js && node --check prompt.js && node --check generation.js && node --check undo.js && node --check settings.js && node --check tests/prompt.test.js && node --check tests/generation.test.js && node --check tests/undo.test.js && node --input-type=module -e \"import fs from 'node:fs'; const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8')); if (manifest.display_name !== 'feedPros') throw new Error('display_name'); if (manifest.js !== 'index.js') throw new Error('js'); if (manifest.css !== 'style.css') throw new Error('css'); if (manifest.version !== '0.1.0') throw new Error('version'); if (manifest.author !== 'feedPros') throw new Error('author'); if (manifest.minimum_client_version !== '1.17.0') throw new Error('minimum_client_version'); for (const file of [manifest.js, manifest.css, 'settings.html']) { if (!fs.existsSync(file)) throw new Error('missing ' + file); } const index = fs.readFileSync('index.js', 'utf8'); for (const mod of ['./common.js', './prompt.js', './generation.js', './undo.js', './settings.js']) { if (!index.includes(mod)) throw new Error('unwired ' + mod); }\""
